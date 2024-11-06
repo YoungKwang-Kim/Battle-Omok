@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UIElements;
 
 public class CreateStones : MonoBehaviour
 {
@@ -33,12 +35,14 @@ public class CreateStones : MonoBehaviour
     private bool isBlack;
     private bool isWhite;
 
+    [SerializeField]
+    private TextMeshProUGUI gameoverText;
+
     private void Start()
     {
         CreateBoard(rows, cols);
     }
 
-    // Update is called once per frame
     void Update()
     {
         PlaceStone();
@@ -56,6 +60,7 @@ public class CreateStones : MonoBehaviour
         opacityStone.SetActive(false);
         board = new GameObject[rows, cols];
         stones = new int[rows, cols];
+        gameoverText.enabled = false;
     }
 
     // 그리드 맵 만들기
@@ -103,7 +108,7 @@ public class CreateStones : MonoBehaviour
             Debug.LogError("You Can't lay stone here.");
             return;
         }
-
+        // 돌이 없으면
         if (stones[x, y] == empty)
         {
             // 흙돌일 때
@@ -116,7 +121,9 @@ public class CreateStones : MonoBehaviour
 
                 stones[x, y] = black;
 
-                Debug.Log($"black stone is {x}, {y}");
+                Debug.Log($"Black stone is {x}, {y}");
+
+                CheckWin(x, y, black);
             }
             // 백돌일 때
             else if (isWhite)
@@ -128,9 +135,14 @@ public class CreateStones : MonoBehaviour
 
                 stones[x, y] = white;
 
-                Debug.Log($"white Stone is {x}, {y}");
-            }
+                Debug.Log($"White stone is {x}, {y}");
 
+                CheckWin(x, y, white);
+            }
+        }
+        else
+        {
+            Debug.Log("Stone is already here");
         }
     }
 
@@ -160,5 +172,57 @@ public class CreateStones : MonoBehaviour
         {
             CreateStone(int.Parse(nameSplit[1]), int.Parse(nameSplit[2]), targetPoint);
         }
+    }
+
+    // 승리 조건 체크 함수
+    private void CheckWin(int x, int y, int stoneColor)
+    {
+        // 4가지 방향: 가로, 세로, 대각선 (\), 역대각선 (/)
+        int[][] directions = new int[][] {
+            new int[] { 1, 0 }, // 가로
+            new int[] { 0, 1 }, // 세로
+            new int[] { 1, 1 }, // 대각선 (\)
+            new int[] { 1, -1 } // 역대각선 (/)
+        };
+
+        foreach (var dir in directions)
+        {
+            int count = 1;
+
+            // 한쪽 방향 체크
+            count += CountStonesInDirection(x, y, dir[0], dir[1], stoneColor);
+
+            // 반대 방향 체크
+            count += CountStonesInDirection(x, y, -dir[0], -dir[1], stoneColor);
+
+            // 5개 연속 확인
+            if (count >= 5 && stoneColor == 1)
+            {
+                gameoverText.enabled = true;
+                gameoverText.text = "Black win";
+            }
+            else if (count >= 5 && stoneColor == 2)
+            {
+                gameoverText.enabled = true;
+                gameoverText.text = "White win";
+            }
+        }
+    }
+
+    // 주어진 방향으로 같은 돌 개수를 카운트하는 함수
+    private int CountStonesInDirection(int x, int y, int dx, int dy, int stoneColor)
+    {
+        int count = 0;
+        int nx = x + dx;
+        int ny = y + dy;
+
+        while (nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && stones[nx, ny] == stoneColor)
+        {
+            count++;
+            nx += dx;
+            ny += dy;
+        }
+
+        return count;
     }
 }
