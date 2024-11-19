@@ -216,7 +216,7 @@ public class CreateStones : MonoBehaviour
         int nx = x + dx;
         int ny = y + dy;
 
-        while (nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && stones[nx, ny] == stoneColor)
+        while (nx >= 0 && ny >= 0 && nx < rows && ny < cols && stones[nx, ny] == stoneColor)
         {
             count++;
             nx += dx;
